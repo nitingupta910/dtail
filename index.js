@@ -6,6 +6,10 @@ var port = 8080
 
 // Parse command-line args
 var argv = require('minimist')(process.argv.slice(2));
+if (!argv._.length) {
+    console.log("Missing log file name");
+    return;
+}
 var filename = argv._[0];
 
 // Attach file to tail

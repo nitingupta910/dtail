@@ -1,0 +1,11 @@
+{
+    "name": "dtail",
+    "version": "0.0.1",
+    "description": "push log tail over socket",
+    "dependencies": {
+        "socket.io": "latest",
+        "express": "latest",
+        "tail": "latest"
+    },
+    "author": "Nitin Gupta"
+}

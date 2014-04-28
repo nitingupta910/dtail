@@ -14,7 +14,9 @@ var filename = argv._[0];
 
 // Attach file to tail
 if (!fs.existsSync(filename)) fs.writeFileSync(filename, "");
-var tail = new Tail(filename, '\n');
+var tail = new Tail(filename, '\n', {
+    "interval": 100
+});
 
 function parseLine(line) {
     console.log(line);

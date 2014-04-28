@@ -1,20 +1,15 @@
 //var view;
+//var plotData = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
-function recvFileName(fname) {
-    console.log("filename received: " + fname);
-    $("#heading").text(fname);
-}
+var n = 40;
+var random = d3.random.normal(0, .2);
+var plotData = d3.range(n).map(random);
 
-function recvData(data) {
-    console.log(data);
-    //view.append(data + "<br />");
-}
+var x;
+var line;
+var path;
 
 function initView() {
-    var n = 40,
-        random = d3.random.normal(0, .2),
-        data = d3.range(n).map(random);
-
     var margin = {
         top: 20,
         right: 20,
@@ -24,7 +19,7 @@ function initView() {
         width = 960 - margin.left - margin.right,
         height = 500 - margin.top - margin.bottom;
 
-    var x = d3.scale.linear()
+    x = d3.scale.linear()
         .domain([0, n - 1])
         .range([0, width]);
 
@@ -32,7 +27,7 @@ function initView() {
         .domain([-1, 1])
         .range([height, 0]);
 
-    var line = d3.svg.line()
+    line = d3.svg.line()
         .x(function(d, i) {
             return x(i);
         })
@@ -61,38 +56,47 @@ function initView() {
         .attr("class", "y axis")
         .call(d3.svg.axis().scale(y).orient("left"));
 
-    var path = svg.append("g")
+    path = svg.append("g")
         .attr("clip-path", "url(#clip)")
         .append("path")
-        .datum(data)
+        .datum(plotData)
         .attr("class", "line")
         .attr("d", line);
+}
 
-    tick();
+function recvFileName(fname) {
+    console.log("filename received: " + fname);
+    $("#heading").text(fname);
+}
 
-    function tick() {
+function redraw() {
+    // redraw the line, and slide it to the left
+    path
+        .attr("d", line)
+        .attr("transform", null)
+        .transition()
+        .duration(100)
+        .ease("linear")
+        .attr("transform", "translate(" + x(-1) + ",0)");
 
-        // push a new data point onto the back
-        data.push(random());
+    // pop the old data point off the front
+    plotData.shift();
+}
 
-        // redraw the line, and slide it to the left
-        path
-            .attr("d", line)
-            .attr("transform", null)
-            .transition()
-            .duration(500)
-            .ease("linear")
-            .attr("transform", "translate(" + x(-1) + ",0)")
-            .each("end", tick);
-
-        // pop the old data point off the front
-        data.shift();
-    }
+function recvData(data) {
+    //console.log(data);
+    //var rval = Math.random();
+    //console.log(rval);
+    //plotData.push(rval);
+    var rval = random();
+    console.log(rval);
+    plotData.push(rval);
+    redraw();
+    //view.append(data + "<br />");
 }
 
 window.onload = function() {
     var socket = io.connect('http://localhost:8080');
-    //view = $("#content");
     initView();
     socket.on('data:filename', recvFileName);
     socket.on('data', recvData)

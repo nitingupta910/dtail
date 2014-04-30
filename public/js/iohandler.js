@@ -1,6 +1,3 @@
-//var view;
-//var plotData = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-
 var n = 40;
 //var random = d3.random.normal(0, .2);
 //var plotData = d3.range(n).map(random);
@@ -16,8 +13,12 @@ var path;
 var xAxis;
 var xAxisView;
 var xScaleView;
+var yScale;
+var yAxis;
+var yAxisView;
 
 var width;
+var height;
 var eventNumber = 0;
 
 function initView() {
@@ -28,14 +29,14 @@ function initView() {
         left: 40
     };
     width = 960 - margin.left - margin.right;
-    var height = 500 - margin.top - margin.bottom;
+    height = 500 - margin.top - margin.bottom;
 
     xScale = d3.scale.linear()
         .domain([0, n])
         .range([0, width]);
 
-    var yScale = d3.scale.linear()
-        .domain([0, 4096])
+    yScale = d3.scale.linear()
+        .domain([0, d3.max(plotData)])
         .range([height, 0]);
 
     line = d3.svg.line()
@@ -58,6 +59,13 @@ function initView() {
         .attr("width", width)
         .attr("height", height);
 
+    path = svg.append("g")
+        .attr("clip-path", "url(#clip)")
+        .append("path")
+        .datum(plotData)
+        .attr("class", "line")
+        .attr("d", line);
+
     xScaleView = d3.scale.linear()
         .domain([eventNumber - n, eventNumber])
         .range([0, width]);
@@ -74,16 +82,10 @@ function initView() {
         })
         .ticks(10);
 
-    svg.append("g")
+    yAxis = d3.svg.axis().scale(yScale).orient("left");
+    yAxisView = svg.append("g")
         .attr("class", "y axis")
-        .call(d3.svg.axis().scale(yScale).orient("left"));
-
-    path = svg.append("g")
-        .attr("clip-path", "url(#clip)")
-        .append("path")
-        .datum(plotData)
-        .attr("class", "line")
-        .attr("d", line);
+        .call(yAxis);
 
     xAxisView = svg.append("g")
         .attr("class", "x axis")
@@ -101,6 +103,10 @@ function redraw() {
         .domain([eventNumber - n, eventNumber])
         .range([0, width]);
 
+    yScale
+        .domain([0, d3.max(plotData)])
+        .range([height, 0]);
+
     // redraw the line, and slide it to the left
     path
         .datum(plotData)
@@ -117,13 +123,22 @@ function redraw() {
         .ease("linear")
         .call(xAxis);
 
+    // adjust the y-axis
+    yAxisView.transition()
+        .duration(100)
+        .ease("linear")
+        .call(yAxis);
+
     // pop the old data point off the front
     plotData.shift();
 }
 
 function recvData(data) {
     eventNumber++;
-    plotData.push(1024);
+    //console.log(data);
+    var res = data.split(":");
+    var val = parseInt(res[1]);
+    plotData.push(val);
     redraw();
 }
 

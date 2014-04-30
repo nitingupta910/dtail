@@ -5,7 +5,7 @@ var n = 40;
 //var random = d3.random.normal(0, .2);
 //var plotData = d3.range(n).map(random);
 var plotData = [];
-for (i = 0; i < n; i++) {
+for (i = 0; i <= n; i++) {
     plotData.push(0);
 }
 //var plotData = [400, 900, 1000, 300, 4000];
@@ -74,11 +74,6 @@ function initView() {
         })
         .ticks(10);
 
-    xAxisView = svg.append("g")
-        .attr("class", "x axis")
-        .attr("transform", "translate(0, " + yScale(0) + ")")
-        .call(xAxis);
-
     svg.append("g")
         .attr("class", "y axis")
         .call(d3.svg.axis().scale(yScale).orient("left"));
@@ -89,6 +84,11 @@ function initView() {
         .datum(plotData)
         .attr("class", "line")
         .attr("d", line);
+
+    xAxisView = svg.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0, " + yScale(0) + ")")
+        .call(xAxis);
 }
 
 function recvFileName(fname) {

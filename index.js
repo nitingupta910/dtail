@@ -19,7 +19,7 @@ var tail = new Tail(filename, '\n', {
 });
 
 function parseLine(line) {
-    console.log(line);
+    //console.log(line);
     return line;
 }
 

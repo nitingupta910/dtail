@@ -8,5 +8,8 @@
         "always-tail": "latest",
         "minimist": "latest"
     },
-    "author": "Nitin Gupta"
+    "author": "Nitin Gupta",
+    "devDependencies": {
+        "grunt-contrib-jshint": "^0.10.0"
+    }
 }

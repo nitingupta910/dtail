@@ -1,8 +1,13 @@
+"use strict";
+/*global d3:false */
+/*global $:false */
+
 var n = 40;
 //var random = d3.random.normal(0, .2);
 //var plotData = d3.range(n).map(random);
 var plotData = [];
-for (var i = 0; i <= n; i++) {
+var i;
+for (i = 0; i <= n; i += 1) {
     plotData.push(0);
 }
 //var plotData = [400, 900, 1000, 300, 4000];
@@ -41,10 +46,10 @@ function initView() {
         .range([height, 0]);
 
     line = d3.svg.line()
-        .x(function(d, i) {
+        .x(function (d, i) {
             return xScale(i);
         })
-        .y(function(d, i) {
+        .y(function (d) {
             return yScale(d);
         });
 
@@ -74,12 +79,11 @@ function initView() {
     xAxis = d3.svg.axis()
         .scale(xScaleView)
         .orient("bottom")
-        .tickFormat(function(d) {
+        .tickFormat(function (d) {
             if (d < 0) {
-                return ""
-            } else {
-                return d;
+                return "";
             }
+            return d;
         })
         .ticks(10);
 
@@ -135,18 +139,18 @@ function redraw() {
 }
 
 function recvData(data) {
-    eventNumber++;
+    eventNumber += 1;
     //console.log(data);
-    var res = data.split(":");
-    var val = parseInt(res[1]);
+    var res = data.split(":"),
+        val = parseInt(res[1], 10);
     plotData.push(val);
     redraw();
 }
 
-window.onload = function() {
+window.onload = function () {
     var socket = io.connect('http://localhost:8080');
     initView();
     socket.on('data:filename', recvFileName);
-    socket.on('data', recvData)
+    socket.on('data', recvData);
     socket.emit('client:ready');
-}
+};

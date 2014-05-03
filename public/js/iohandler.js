@@ -2,7 +2,7 @@ var n = 40;
 //var random = d3.random.normal(0, .2);
 //var plotData = d3.range(n).map(random);
 var plotData = [];
-for (i = 0; i <= n; i++) {
+for (var i = 0; i <= n; i++) {
     plotData.push(0);
 }
 //var plotData = [400, 900, 1000, 300, 4000];
@@ -13,6 +13,7 @@ var path;
 var xAxis;
 var xAxisView;
 var xScaleView;
+var xScale;
 var yScale;
 var yAxis;
 var yAxisView;

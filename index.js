@@ -2,7 +2,7 @@ var express = require("express");
 var Tail = require('always-tail');
 var fs = require('fs');
 var app = express();
-var port = 8080
+var port = 8080;
 
 // Parse command-line args
 var argv = require('minimist')(process.argv.slice(2));
@@ -38,7 +38,7 @@ io.sockets.on('connection', function(socket) {
         // Setup tail callbacks
         tail.on('line', function(data) {
             var parsed = parseLine(data);
-            socket.emit('data', parsed)
+            socket.emit('data', parsed);
         });
 
         tail.on('error', function(data) {

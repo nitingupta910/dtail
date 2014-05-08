@@ -195,6 +195,52 @@ function Plot(eventName, numValues) {
         .attr("x", 20)
         .attr("y", 20)
         .text(this.eventName);
+
+    /*
+     * draw legend
+     */
+    // TODO:
+    //   1) separate out into separate file/functions
+    //   2) calculate boundingBoxWidth based on the longest key string
+    var legend = {
+        "x": 20,
+        "y": 20,
+        "boundingBoxWidth": 128,
+        "boxWidth": 12,
+        "boxHeight": 12,
+        "boxMargin": 10,
+        "textMargin": 8
+    };
+    var legendGroup = this.svg.append("g")
+        .attr("class", "legend")
+        .attr("transform", "translate(10, 30)");
+
+    // draw rect bounding all keys
+    legendGroup.append("rect")
+        .attr("x", legend.x - legend.textMargin)
+        .attr("y", legend.y - legend.textMargin)
+        .attr("rx", 5)
+        .attr("ry", 4)
+        .attr("width", legend.x + legend.boundingBoxWidth)
+        .attr("height", legend.y + numValues * (legend.boxHeight + legend.boxMargin))
+        .style("fill", "grey")
+        .style("fill-opacity", "0.5");
+
+    // draw small rects and associated text
+    for (i = 0; i < numValues; i++) {
+        var color = self.colors(i);
+        var legendY = legend.y + i * (legend.boxHeight + legend.boxMargin);
+        legendGroup.append("rect")
+            .attr("x", legend.x)
+            .attr("y", legendY)
+            .attr("width", legend.boxWidth)
+            .attr("height", legend.boxHeight)
+            .style("fill", color);
+        legendGroup.append("text")
+            .attr("x", legend.x + legend.boxWidth + legend.textMargin)
+            .attr("y", legendY + legend.boxHeight)
+            .text("val" + i);
+    }
 }
 
 function recvFileName(fname) {

@@ -76,6 +76,13 @@ function Plot(eventName, numValues) {
         .range([this.height, 0]);
     //.domain([0, d3.max(self.data[self.eventWindow])])
 
+    // randomly select colors for each line
+    this.colors = d3.scale.category10();
+    console.log(this.colors);
+    /*for (i = 0; i < numValues; i++) {
+        this.colors.push("hsl(" + Math.random() * 360 + ",100%,50%)");
+    }*/
+
     this.line = [];
     for (i = 0; i < numValues; i++) {
         this.line[i] = d3.svg.line()
@@ -90,6 +97,37 @@ function Plot(eventName, numValues) {
         .append("g")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
+    /*
+     * Draw grid lines
+     */
+
+    // vertical lines
+    this.svg.selectAll(".vline").data(d3.range(this.eventWindow)).enter()
+        .append("line")
+        .attr("x1", function(d) {
+            return self.xScale(d);
+        })
+        .attr("x2", function(d) {
+            return self.xScale(d);
+        })
+        .attr("y1", 0)
+        .attr("y2", this.height)
+        .style("stroke", "#ddd");
+
+    // horizontal lines
+    this.svg.selectAll(".hline").data(d3.range(10)).enter()
+        .append("line")
+        .attr("x1", 0)
+        .attr("x2", this.width)
+        .attr("y1", function(d) {
+            return self.height * d / 10;
+        })
+        .attr("y2", function(d) {
+            return self.height * d / 10;
+        })
+        .style("stroke", "#eee");
+
+    // define clip region
     this.svg.append("defs").append("clipPath")
         .attr("id", "clip")
         .append("rect")
@@ -99,13 +137,17 @@ function Plot(eventName, numValues) {
     var clipArea = this.svg.append("g")
         .attr("clip-path", "url(#clip)");
 
+    // draw the line graph
     this.path = [];
     for (i = 0; i < numValues; i++) {
         this.path[i] = clipArea
             .append("path")
             .datum(this.data)
             .attr("class", "line")
-            .attr("d", this.line[i]);
+            .attr("d", this.line[i])
+            .attr("stroke", self.colors(i))
+            .attr("stroke-width", "2px")
+            .attr("fill", "none");
     }
 
     // create circles to highlight actual data points
@@ -136,40 +178,13 @@ function Plot(eventName, numValues) {
         })
         .ticks(10);
 
-    /*
-     * Draw grid lines
-     */
-
-    // vertical lines
-    this.svg.selectAll(".vline").data(d3.range(this.eventWindow)).enter()
-        .append("line")
-        .attr("x1", function(d) {
-            return self.xScale(d);
-        })
-        .attr("x2", function(d) {
-            return self.xScale(d);
-        })
-        .attr("y1", 0)
-        .attr("y2", this.height)
-        .style("stroke", "#ddd");
-
-    // horizontal liines
-    this.svg.selectAll(".hline").data(d3.range(10)).enter()
-        .append("line")
-        .attr("x1", 0)
-        .attr("x2", this.width)
-        .attr("y1", function(d) {
-            return self.height * d / 10;
-        })
-        .attr("y2", function(d) {
-            return self.height * d / 10;
-        })
-        .style("stroke", "#eee");
-
+    // draw X & Y axis
     this.yAxis = d3.svg.axis().scale(this.yScale).orient("left");
     this.yAxisView = this.svg.append("g")
         .attr("class", "y axis")
         .attr("transform", "translate(" + self.xScale(0) + ", 0")
+        .attr("stroke", "black")
+        .attr("stroke-width", "1px")
         .call(this.yAxis);
 
     this.xAxisView = this.svg.append("g")
@@ -193,7 +208,6 @@ function redraw(plot) {
     plot.yScale
         .domain([0, plot.maxValue])
         .range([plot.height, 0]);
-    //.domain([0, d3.max(plot.data[plot.eventWindow])])
 
     // redraw the line, and slide it to the left
     var numValues = plot.data[0].length;
@@ -201,6 +215,9 @@ function redraw(plot) {
         plot.path[i]
             .datum(plot.data)
             .attr("d", plot.line[i])
+            .attr("stroke", plot.colors(i))
+            .attr("stroke-width", "2px")
+            .attr("fill", "none")
             .attr("transform", null)
             .transition()
             .duration(100)
@@ -208,6 +225,7 @@ function redraw(plot) {
             .attr("transform", "translate(" + plot.xScale(-1) + ",0)");
     }
 
+    // draw circles corresponding to actual data points
     for (i = 0; i < numValues; i++) {
         var circles = plot.circleGroup[i].selectAll("circle").data(plot.data);
         circles

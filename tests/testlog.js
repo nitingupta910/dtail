@@ -98,8 +98,8 @@ function multiEventsDiffValues() {
     appendToFile(filename, str);
 }
 
-setInterval(singleEvent, 1000);
+//setInterval(singleEvent, 1000);
 //setInterval(multiEvents, 1000);
 //setInterval(singleEventMultiValues, 1000);
 //setInterval(multiEventsMultiValues, 1000);
-//setInterval(multiEventsDiffValues, 1000);
+setInterval(multiEventsDiffValues, 1000);

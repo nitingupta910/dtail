@@ -35,6 +35,20 @@ function zeroFill(arr, count) {
     }
 }*/
 
+var fx = function() {
+    var self = this;
+    return function (d, i) {
+        return self.xScale(i);
+    };
+};
+
+function createFy(i) {
+    var self = this;
+    return function(d) {
+        return self.yScale(d[i]);
+    };
+}
+
 function Plot(eventName, numValues) {
     var self = this;
     this.eventName = eventName;
@@ -63,23 +77,11 @@ function Plot(eventName, numValues) {
     //.domain([0, d3.max(self.data[self.eventWindow])])
 
     this.line = [];
-    var fx = function(d, i) {
-        return self.xScale(i);
-    };
-
-    function createFy(i) {
-        return function(d) {
-            return self.yScale(d[i]);
-        };
-    }
-
-    var fy = [];
     for (i = 0; i < numValues; i++) {
-        fy[i] = createFy(i);
         this.line[i] = d3.svg.line()
             .interpolate("monotone")
-            .x(fx)
-            .y(fy[i]);
+            .x(fx.call(self))
+            .y(createFy.call(self, i));
     }
 
     this.svg = d3.select("#content").append("svg")
@@ -106,18 +108,18 @@ function Plot(eventName, numValues) {
             .attr("d", this.line[i]);
     }
 
-    this.circleGroup = this.svg.append("g");
-    this.circle = this.circleGroup.selectAll("circle")
-        .data(self.data);
+    // create circles to highlight actual data points
+    this.circleGroup = [];
+    for (i = 0; i < numValues; i++) {
+        this.circleGroup[i] = this.svg.append("g");
+        var circles = this.circleGroup[i].selectAll("circle")
+            .data(self.data);
 
-    this.circle.enter().append("circle")
-    .attr("cx", function(d, i) {
-        return self.xScale(i);
-    })
-    .attr("cy", function(d) {
-        return self.yScale(d[0]);
-    })
-    .attr("r", 5);
+        circles.enter().append("circle")
+            .attr("cx", fx.call(self, i))
+            .attr("cy", createFy.call(self, i))
+            .attr("r", 4);
+    }
 
     this.xScaleView = d3.scale.linear()
         .domain([this.eventNumber - this.eventWindow, this.eventNumber])
@@ -134,6 +136,36 @@ function Plot(eventName, numValues) {
         })
         .ticks(10);
 
+    /*
+     * Draw grid lines
+     */
+
+    // vertical lines
+    this.svg.selectAll(".vline").data(d3.range(this.eventWindow)).enter()
+        .append("line")
+        .attr("x1", function(d) {
+            return self.xScale(d);
+        })
+        .attr("x2", function(d) {
+            return self.xScale(d);
+        })
+        .attr("y1", 0)
+        .attr("y2", this.height)
+        .style("stroke", "#ddd");
+
+    // horizontal liines
+    this.svg.selectAll(".hline").data(d3.range(10)).enter()
+        .append("line")
+        .attr("x1", 0)
+        .attr("x2", this.width)
+        .attr("y1", function(d) {
+            return self.height * d / 10;
+        })
+        .attr("y2", function(d) {
+            return self.height * d / 10;
+        })
+        .style("stroke", "#eee");
+
     this.yAxis = d3.svg.axis().scale(this.yScale).orient("left");
     this.yAxisView = this.svg.append("g")
         .attr("class", "y axis")
@@ -142,7 +174,9 @@ function Plot(eventName, numValues) {
 
     this.xAxisView = this.svg.append("g")
         .attr("class", "x axis")
-        .attr("transform", "translate(0, " + self.yScale(0) + ")")
+        .attr("transform", "translate(0, " + self.height + ")")
+        .attr("stroke", "black")
+        .attr("stroke-width", "1px")
         .call(this.xAxis);
 }
 
@@ -174,19 +208,17 @@ function redraw(plot) {
             .attr("transform", "translate(" + plot.xScale(-1) + ",0)");
     }
 
-    var circles = plot.svg.selectAll("circle").data(plot.data);
-    circles
-        .attr("cx", function(d, i) {
-            return plot.xScale(i);
-        })
-        .attr("cy", function(d) {
-            return plot.yScale(d[0]);
-        })
-        .attr("transform", null)
-        .transition()
-        .duration(100)
-        .ease("linear")
-        .attr("transform", "translate(" + plot.xScale(-1) + ", 0)");
+    for (i = 0; i < numValues; i++) {
+        var circles = plot.circleGroup[i].selectAll("circle").data(plot.data);
+        circles
+            .attr("cx", fx.call(plot))
+            .attr("cy", createFy.call(plot, i))
+            .attr("transform", null)
+            .transition()
+            .duration(100)
+            .ease("linear")
+            .attr("transform", "translate(" + plot.xScale(-1) + ", 0)");
+    }
 
     // slide the x-axis left
     plot.xAxisView.transition()

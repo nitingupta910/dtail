@@ -77,6 +77,7 @@ function Plot(eventName, numValues) {
     for (i = 0; i < numValues; i++) {
         fy[i] = createFy(i);
         this.line[i] = d3.svg.line()
+            .interpolate("monotone")
             .x(fx)
             .y(fy[i]);
     }
@@ -104,6 +105,20 @@ function Plot(eventName, numValues) {
             .attr("class", "line")
             .attr("d", this.line[i]);
     }
+
+    this.circleGroup = this.svg.append("g");
+    this.circle = this.circleGroup.selectAll("circle")
+        .data(self.data);
+
+    this.circle.enter().append("circle")
+    .attr("cx", function(d, i) {
+        return self.xScale(i);
+    })
+    .attr("cy", function(d) {
+        return self.yScale(d[0]);
+    })
+    .attr("r", 5);
+
     this.xScaleView = d3.scale.linear()
         .domain([this.eventNumber - this.eventWindow, this.eventNumber])
         .range([0, this.width]);
@@ -158,6 +173,21 @@ function redraw(plot) {
             .ease("linear")
             .attr("transform", "translate(" + plot.xScale(-1) + ",0)");
     }
+
+    var circles = plot.svg.selectAll("circle").data(plot.data);
+    circles
+        .attr("cx", function(d, i) {
+            return plot.xScale(i);
+        })
+        .attr("cy", function(d) {
+            return plot.yScale(d[0]);
+        })
+        .attr("transform", null)
+        .transition()
+        .duration(100)
+        .ease("linear")
+        .attr("transform", "translate(" + plot.xScale(-1) + ", 0)");
+
     // slide the x-axis left
     plot.xAxisView.transition()
         .duration(100)

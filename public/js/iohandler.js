@@ -37,7 +37,7 @@ function zeroFill(arr, count) {
 
 var fx = function() {
     var self = this;
-    return function (d, i) {
+    return function(d, i) {
         return self.xScale(i);
     };
 };
@@ -74,14 +74,9 @@ function Plot(eventName, numValues) {
     this.yScale = d3.scale.linear()
         .domain([0, self.maxValue])
         .range([this.height, 0]);
-    //.domain([0, d3.max(self.data[self.eventWindow])])
 
     // randomly select colors for each line
     this.colors = d3.scale.category10();
-    console.log(this.colors);
-    /*for (i = 0; i < numValues; i++) {
-        this.colors.push("hsl(" + Math.random() * 360 + ",100%,50%)");
-    }*/
 
     this.line = [];
     for (i = 0; i < numValues; i++) {
@@ -193,6 +188,13 @@ function Plot(eventName, numValues) {
         .attr("stroke", "black")
         .attr("stroke-width", "1px")
         .call(this.xAxis);
+
+    // draw title
+    this.svg.append("text")
+        .attr("class", "title")
+        .attr("x", 20)
+        .attr("y", 20)
+        .text(this.eventName);
 }
 
 function recvFileName(fname) {

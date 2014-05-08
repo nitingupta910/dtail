@@ -6,7 +6,8 @@
         "socket.io": "latest",
         "express": "latest",
         "always-tail": "latest",
-        "minimist": "latest"
+        "minimist": "latest",
+        "cli-color": "latest"
     },
     "author": "Nitin Gupta",
     "devDependencies": {

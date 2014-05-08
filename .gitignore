@@ -1,5 +1,6 @@
 *.swp
 *~
+events.txt
 node_modules
 bower_components
 .idea/workspace.xml

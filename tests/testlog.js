@@ -98,8 +98,18 @@ function multiEventsDiffValues() {
     appendToFile(filename, str);
 }
 
+function markAndPlotEvents() {
+    var rand = Math.random();
+    if (rand > 0.8) {
+        appendToFile(filename, "MARK:GC\n");
+    } else {
+        multiEventsDiffValues();
+    }
+}
+
 //setInterval(singleEvent, 1000);
 //setInterval(multiEvents, 1000);
 //setInterval(singleEventMultiValues, 1000);
 //setInterval(multiEventsMultiValues, 1000);
-setInterval(multiEventsDiffValues, 1000);
+//setInterval(multiEventsDiffValues, 1000);
+setInterval(markAndPlotEvents, 1000);

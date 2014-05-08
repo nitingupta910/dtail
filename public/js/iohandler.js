@@ -202,7 +202,6 @@ function recvData(data) {
         values.push(val);
     }
 
-
     plot.maxValue = 4096;
     plot.data.push(values);
     plot.eventNumber += 1;

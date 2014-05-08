@@ -12,6 +12,10 @@ function appendToFile(filename, str) {
     });
 }
 
+function getRandomUpto(maxValue) {
+    return 1 + Math.floor(Math.random() * (maxValue - 1));
+}
+
 function singleEvent() {
     var csv = Math.floor(Math.random() * maxValue);
     var str = "EVENT:" + csv + "\n";
@@ -54,7 +58,48 @@ function multiEventsMultiValues() {
     appendToFile(filename, str);
 }
 
+var medvNumValues = [];
+
+function medvTestInit() {
+    if (medvNumValues.length) {
+        return;
+    }
+    var maxNumValues = 8;
+    var maxEventsTypes = 4;
+    for (var i = 0; i < maxEventsTypes; i++) {
+        medvNumValues.push(getRandomUpto(maxNumValues));
+    }
+    console.log(medvNumValues);
+}
+
+/* Different number of values for different events. e.g:
+ * EVENT[0]:v1,v2,v3,v4
+ * EVENT[1]:v1,v2
+ * EVENT[2]:v1,v1,v3
+ * EVENT[4]:v1
+ */
+function multiEventsDiffValues() {
+    medvTestInit();
+    var eventTypes = medvNumValues.length;
+
+    // generate a random event
+    var e = Math.floor(Math.random() * eventTypes);
+    var n = medvNumValues[e];
+
+    // generate random values for this event
+    var values = [];
+    for (var i = 0; i < n; i++) {
+        values.push(getRandomUpto(maxValue));
+    }
+
+    // append EVENT[x]:v1,v2,... to file
+    var csv = values.join(",");
+    var str = "EVENT[" + e + "]:" + csv + "\n";
+    appendToFile(filename, str);
+}
+
 //setInterval(singleEvent, 1000);
 //setInterval(multiEvents, 1000);
 //setInterval(singleEventMultiValues, 1000);
-setInterval(multiEventsMultiValues, 1000);
+//setInterval(multiEventsMultiValues, 1000);
+setInterval(multiEventsDiffValues, 1000);

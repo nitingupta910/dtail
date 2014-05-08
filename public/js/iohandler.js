@@ -5,7 +5,7 @@
 
 //(function() {
 //    'use strict';
-var defaultEventWindow = 40;
+var defaultEventWindow = 10;
 
 var plots = [];
 
@@ -22,7 +22,20 @@ var defaultOuterHeight = 500;
 var defaultWidth = defaultOuterWidth - margin.left - margin.right;
 var defaultHeight = defaultOuterHeight - margin.top - margin.bottom;
 
-function Plot(eventName) {
+function zeroFill(arr, count) {
+    for (var i = 0; i < count; i++) {
+        arr[i] = 0;
+    }
+}
+
+/*function randomFill(arr, count) {
+    var maxValue = 4096;
+    for (var i = 0; i < count; i++) {
+        arr[i] = Math.floor(Math.random() * maxValue);
+    }
+}*/
+
+function Plot(eventName, numValues) {
     var self = this;
     this.eventName = eventName;
     this.eventNumber = 0;
@@ -30,8 +43,12 @@ function Plot(eventName) {
 
     this.data = [];
     for (var i = 0; i <= defaultEventWindow; i += 1) {
-        this.data.push(0);
+        var arr = [];
+        zeroFill(arr, numValues);
+        //randomFill(arr, numValues);
+        this.data.push(arr);
     }
+    this.maxValue = 0;
 
     this.width = defaultWidth;
     this.height = defaultHeight;
@@ -41,16 +58,28 @@ function Plot(eventName) {
         .range([0, this.width]);
 
     this.yScale = d3.scale.linear()
-        .domain([0, d3.max(this.data)])
+        .domain([0, self.maxValue])
         .range([this.height, 0]);
+    //.domain([0, d3.max(self.data[self.eventWindow])])
 
-    this.line = d3.svg.line()
-        .x(function(d, i) {
-            return self.xScale(i);
-        })
-        .y(function(d) {
-            return self.yScale(d);
-        });
+    this.line = [];
+    var fx = function(d, i) {
+        return self.xScale(i);
+    };
+
+    function createFy(i) {
+        return function(d) {
+            return self.yScale(d[i]);
+        };
+    }
+
+    var fy = [];
+    for (i = 0; i < numValues; i++) {
+        fy[i] = createFy(i);
+        this.line[i] = d3.svg.line()
+            .x(fx)
+            .y(fy[i]);
+    }
 
     this.svg = d3.select("#content").append("svg")
         .attr("width", this.width + margin.left + margin.right)
@@ -64,13 +93,17 @@ function Plot(eventName) {
         .attr("width", this.width)
         .attr("height", this.height);
 
-    this.path = this.svg.append("g")
-        .attr("clip-path", "url(#clip)")
-        .append("path")
-        .datum(this.data)
-        .attr("class", "line")
-        .attr("d", this.line);
+    var clipArea = this.svg.append("g")
+        .attr("clip-path", "url(#clip)");
 
+    this.path = [];
+    for (i = 0; i < numValues; i++) {
+        this.path[i] = clipArea
+            .append("path")
+            .datum(this.data)
+            .attr("class", "line")
+            .attr("d", this.line[i]);
+    }
     this.xScaleView = d3.scale.linear()
         .domain([this.eventNumber - this.eventWindow, this.eventNumber])
         .range([0, this.width]);
@@ -89,11 +122,12 @@ function Plot(eventName) {
     this.yAxis = d3.svg.axis().scale(this.yScale).orient("left");
     this.yAxisView = this.svg.append("g")
         .attr("class", "y axis")
+        .attr("transform", "translate(" + self.xScale(0) + ", 0")
         .call(this.yAxis);
 
     this.xAxisView = this.svg.append("g")
         .attr("class", "x axis")
-        .attr("transform", "translate(0, " + this.yScale(0) + ")")
+        .attr("transform", "translate(0, " + self.yScale(0) + ")")
         .call(this.xAxis);
 }
 
@@ -108,19 +142,22 @@ function redraw(plot) {
         .range([0, plot.width]);
 
     plot.yScale
-        .domain([0, d3.max(plot.data)])
+        .domain([0, plot.maxValue])
         .range([plot.height, 0]);
+    //.domain([0, d3.max(plot.data[plot.eventWindow])])
 
     // redraw the line, and slide it to the left
-    plot.path
-        .datum(plot.data)
-        .attr("d", plot.line)
-        .attr("transform", null)
-        .transition()
-        .duration(100)
-        .ease("linear")
-        .attr("transform", "translate(" + plot.xScale(-1) + ",0)");
-
+    var numValues = plot.data[0].length;
+    for (var i = 0; i < numValues; i++) {
+        plot.path[i]
+            .datum(plot.data)
+            .attr("d", plot.line[i])
+            .attr("transform", null)
+            .transition()
+            .duration(100)
+            .ease("linear")
+            .attr("transform", "translate(" + plot.xScale(-1) + ",0)");
+    }
     // slide the x-axis left
     plot.xAxisView.transition()
         .duration(100)
@@ -139,23 +176,35 @@ function redraw(plot) {
 
 function recvData(data) {
     //console.log(data);
-    var values = data.split(":"),
-        eventName = values[0],
-        val = parseInt(values[1], 10);
+    var line = data.split(":"),
+        eventName = line[0],
+        valuesStr = line[1].split(','),
+        numValues = valuesStr.length;
 
     var plot;
-    var len = plots.length;
-    for (var i = 0; i < len; i++) {
+    var numPlots = plots.length;
+    for (i = 0; i < numPlots; i++) {
         if (plots[i].eventName === eventName) {
             plot = plots[i];
         }
     }
     if (plot === undefined) {
-        plot = new Plot(eventName);
+        plot = new Plot(eventName, numValues);
         plots.push(plot);
     }
 
-    plot.data.push(val);
+    var values = [];
+    for (var i = 0; i < numValues; i++) {
+        var val = parseInt(valuesStr[i], 10);
+        if (val > plot.maxValue) {
+            plot.maxValue = val;
+        }
+        values.push(val);
+    }
+
+
+    plot.maxValue = 4096;
+    plot.data.push(values);
     plot.eventNumber += 1;
     redraw(plot);
 }

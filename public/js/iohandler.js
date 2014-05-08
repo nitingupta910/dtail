@@ -13,7 +13,7 @@ var margin = {
     top: 20,
     right: 20,
     bottom: 20,
-    left: 40
+    left: 80
 };
 
 var defaultOuterWidth = 960;

@@ -101,7 +101,7 @@ function isSeenPlotEvent(eventStr) {
 }
 
 function parseLineAndEmit(socket, line) {
-    console.log(line);
+    //console.log(line);
     var isWatched = false;
     var parts = line.split(':');
     var eventName = parts[0];

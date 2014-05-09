@@ -16,6 +16,11 @@ var margin = {
     left: 80
 };
 
+var markers = {
+    width: 8,
+    color: "grey"
+};
+
 var defaultOuterWidth = 960;
 var defaultOuterHeight = 500;
 
@@ -59,6 +64,8 @@ function Plot(eventName, keysCSV) {
     var numValues = keys.length;
 
     this.data = [];
+    this.dataMark = [];
+
     for (var i = 0; i <= defaultEventWindow; i += 1) {
         var arr = [];
         zeroFill(arr, numValues);
@@ -80,6 +87,7 @@ function Plot(eventName, keysCSV) {
 
     // randomly select colors for each line
     this.colors = d3.scale.category10();
+    markers.colors = d3.scale.category10();
 
     this.line = [];
     for (i = 0; i < numValues; i++) {
@@ -212,7 +220,9 @@ function Plot(eventName, keysCSV) {
         "boxWidth": 12,
         "boxHeight": 12,
         "boxMargin": 10,
-        "textMargin": 8
+        "textMargin": 8,
+        "fillColor": "grey",
+        "opacity": 0.5
     };
     var legendGroup = this.svg.append("g")
         .attr("class", "legend")
@@ -226,8 +236,8 @@ function Plot(eventName, keysCSV) {
         .attr("ry", 4)
         .attr("width", legend.x + legend.boundingBoxWidth)
         .attr("height", legend.y + numValues * (legend.boxHeight + legend.boxMargin))
-        .style("fill", "grey")
-        .style("fill-opacity", "0.5");
+        .style("fill", legend.fillColor)
+        .style("fill-opacity", legend.opacity);
 
     // draw small rects and associated text
     for (i = 0; i < numValues; i++) {
@@ -244,6 +254,27 @@ function Plot(eventName, keysCSV) {
             .attr("y", legendY + legend.boxHeight)
             .text(keys[i]);
     }
+
+    // create container for mark events
+    this.markerGroup = this.svg.append("g")
+        .attr("class", "markers");
+    zeroFill(this.dataMark, this.eventWindow + 2);
+
+    this.markerGroup.selectAll("rect")
+        .data(this.dataMark)
+        .enter()
+        .append("rect")
+        .attr("x", function(d, i) {
+            return self.xScale(i);
+        })
+        .attr("y", 0)
+        .attr("width", markers.width)
+        .attr("height", function(d) {
+            return !d ? 0 : self.height;
+        })
+        .attr("fill", "red");
+
+    this.dataMark.shift();
 }
 
 function redraw(plot) {
@@ -296,8 +327,41 @@ function redraw(plot) {
         .ease("linear")
         .call(plot.yAxis);
 
+    // slide markers left
+    var sel = plot.markerGroup.selectAll("rect")
+        .data(plot.dataMark);
+
+    sel
+        .attr("x", function(d, i) {
+            return plot.xScale(i);
+        })
+        .attr("y", 0)
+        .attr("width", markers.width)
+        .attr("height", function(d) {
+            return !d ? 0 : plot.height;
+        })
+        .attr("fill", markers.color);
+
+    plot.markerGroup
+        .attr("transform", null)
+        .transition()
+        .duration(100)
+        .ease("linear")
+        .attr("transform", "translate(" + plot.xScale(-1) + ")");
+
     // pop the old data point off the front
     plot.data.shift();
+    plot.dataMark.shift();
+}
+
+function handleMarkEvent() {
+    var plot;
+    var numPlots = plots.length;
+    for (var i = 0; i < numPlots; i++) {
+        plot = plots[i];
+        console.log("MARKING in plot " + i + " at eventNumber " + plot.eventNumber);
+        plot.dataMark[plot.eventWindow] = 1;
+    }
 }
 
 function recvData(data) {
@@ -308,8 +372,7 @@ function recvData(data) {
         numValues = valuesStr.length;
 
     if (eventName === "MARK") {
-        // FIXME: handle MARK events;
-        console.log("FIXME: handle mark event " + valuesStr);
+        handleMarkEvent();
         return;
     }
 
@@ -349,6 +412,7 @@ function recvData(data) {
     }
 
     plot.data.push(values);
+    plot.dataMark.push(0);
     plot.eventNumber += 1;
     redraw(plot);
 }

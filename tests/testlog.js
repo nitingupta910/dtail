@@ -103,7 +103,7 @@ function markAndPlotEvents() {
     if (rand > 0.8) {
         appendToFile(filename, "MARK:GC\n");
     } else {
-        multiEventsDiffValues();
+        multiEventsMultiValues();
     }
 }
 

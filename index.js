@@ -78,7 +78,7 @@ function isWatchedMarkEvent(eventStr) {
 
 // In case of match, returns the matched event object,
 // null otherwise
-function isWatchedPlotEvent(eventStr) {
+function getWatchedPlotEvent(eventStr) {
     var n = watchedPlotEvents.length;
     for (var i = 0; i < n; i++) {
         var re = watchedPlotEvents[i].regex;
@@ -111,7 +111,7 @@ function parseLineAndEmit(socket, line) {
             isWatched = true;
         }
     } else {
-        var e = isWatchedPlotEvent(eventName);
+        var e = getWatchedPlotEvent(eventName);
         if (e !== null) {
             isWatched = true;
             if (!isSeenPlotEvent(eventName)) {
@@ -142,6 +142,16 @@ io.sockets.on('connection', function(socket) {
     socket.on('client:ready', function(data) {
         console.log("client ready now");
         socket.emit('data:filename', filename);
+
+        // tell client about know plots
+        var n = seenPlotEvents.length;
+        for (var i = 0; i < n; i++) {
+            var e = getWatchedPlotEvent(seenPlotEvents[i]);
+            var plotinfo = {};
+            plotinfo.eventName = seenPlotEvents[i];
+            plotinfo.keysCSV = e.keysCSV;
+            socket.emit("data:plotinfo", plotInfo);
+        }
 
         // Setup tail callbacks
         tail.on('line', function(line) {

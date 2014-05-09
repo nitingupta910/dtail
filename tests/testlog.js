@@ -13,7 +13,7 @@ function appendToFile(filename, str) {
 }
 
 function getRandomUpto(maxValue) {
-    return Math.floor(Math.random() * (maxValue - 1));
+    return Math.floor(Math.random() * maxValue);
 }
 
 function singleEvent() {

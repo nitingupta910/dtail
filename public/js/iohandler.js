@@ -338,20 +338,23 @@ function recvData(data) {
     var values = [];
     for (var i = 0; i < numValues; i++) {
         var val = parseInt(valuesStr[i], 10);
+        if (isNaN(val)) {
+            console.log("error parsing to int: " + valuesStr[i]);
+            val = 0;
+        }
         if (val > plot.maxValue) {
             plot.maxValue = val;
         }
         values.push(val);
     }
 
-    plot.maxValue = 4096;
     plot.data.push(values);
     plot.eventNumber += 1;
     redraw(plot);
 }
 
 function recvPlotInfo(pinfo) {
-    console.log("GOT PLOT INFO: " + pinfo.eventName);
+    console.log("GOT PLOT INFO: " + pinfo.eventName + ": " + pinfo.keysCSV);
     var plot = new Plot(pinfo.eventName, pinfo.keysCSV);
     plots.push(plot);
 }

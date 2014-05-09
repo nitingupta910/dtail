@@ -147,9 +147,9 @@ io.sockets.on('connection', function(socket) {
         var n = seenPlotEvents.length;
         for (var i = 0; i < n; i++) {
             var e = getWatchedPlotEvent(seenPlotEvents[i]);
-            var plotinfo = {};
-            plotinfo.eventName = seenPlotEvents[i];
-            plotinfo.keysCSV = e.keysCSV;
+            var plotInfo = {};
+            plotInfo.eventName = seenPlotEvents[i];
+            plotInfo.keysCSV = e.keysCSV;
             socket.emit("data:plotinfo", plotInfo);
         }
 

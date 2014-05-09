@@ -13,7 +13,7 @@ function appendToFile(filename, str) {
 }
 
 function getRandomUpto(maxValue) {
-    return 1 + Math.floor(Math.random() * (maxValue - 1));
+    return Math.floor(Math.random() * (maxValue - 1));
 }
 
 function singleEvent() {
@@ -67,7 +67,7 @@ function medvTestInit() {
     var maxNumValues = 8;
     var maxEventsTypes = 4;
     for (var i = 0; i < maxEventsTypes; i++) {
-        medvNumValues.push(getRandomUpto(maxNumValues));
+        medvNumValues.push(1 + getRandomUpto(maxNumValues));
     }
     console.log(medvNumValues);
 }

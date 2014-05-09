@@ -9,6 +9,7 @@ var port = 8080;
 var eventsFile = "events.txt";
 var watchedPlotEvents = [];
 var watchedMarkEvents = [];
+var seenPlotEvents = [];
 
 // Parse command-line args
 var argv = require('minimist')(process.argv.slice(2));
@@ -75,36 +76,59 @@ function isWatchedMarkEvent(eventStr) {
     return false;
 }
 
+// In case of match, returns the matched event object,
+// null otherwise
 function isWatchedPlotEvent(eventStr) {
     var n = watchedPlotEvents.length;
     for (var i = 0; i < n; i++) {
         var re = watchedPlotEvents[i].regex;
         var match = re.test(eventStr);
         if (match) {
+            return watchedPlotEvents[i];
+        }
+    }
+    return null;
+}
+
+function isSeenPlotEvent(eventStr) {
+    var n = seenPlotEvents.length;
+    for (var i = 0; i < n; i++) {
+        if (seenPlotEvents[i] == eventStr) {
             return true;
         }
     }
     return false;
 }
 
-function isWatchedEvent(line) {
+function parseLineAndEmit(socket, line) {
     console.log(line);
     var isWatched = false;
     var parts = line.split(':');
-    if (parts[0] == "MARK") {
+    var eventName = parts[0];
+
+    if (eventName == "MARK") {
         if (isWatchedMarkEvent(parts[1])) {
             isWatched = true;
         }
     } else {
-        if (isWatchedPlotEvent(parts[0])) {
+        var e = isWatchedPlotEvent(eventName);
+        if (e !== null) {
             isWatched = true;
+            if (!isSeenPlotEvent(eventName)) {
+                seenPlotEvents.push(eventName);
+                // inform client about this new kind of plot
+                var plotInfo = {};
+                plotInfo.eventName = eventName;
+                plotInfo.keysCSV = e.keysCSV;
+                socket.emit('data:plotinfo', plotInfo);
+            }
         }
     }
 
     if (isWatched) {
         console.log("MATCH: " + line);
+        socket.emit('data', line);
     }
-    return isWatched;
 }
 
 // Set static content path
@@ -120,10 +144,8 @@ io.sockets.on('connection', function(socket) {
         socket.emit('data:filename', filename);
 
         // Setup tail callbacks
-        tail.on('line', function(data) {
-            if (isWatchedEvent(data)) {
-                socket.emit('data', data);
-            }
+        tail.on('line', function(line) {
+            parseLineAndEmit(socket, line);
         });
 
         tail.on('error', function(data) {

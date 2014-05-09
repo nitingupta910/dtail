@@ -49,11 +49,14 @@ function createFy(i) {
     };
 }
 
-function Plot(eventName, numValues) {
+function Plot(eventName, keysCSV) {
     var self = this;
     this.eventName = eventName;
     this.eventNumber = 0;
     this.eventWindow = defaultEventWindow;
+
+    var keys = keysCSV.split(",");
+    var numValues = keys.length;
 
     this.data = [];
     for (var i = 0; i <= defaultEventWindow; i += 1) {
@@ -239,13 +242,8 @@ function Plot(eventName, numValues) {
         legendGroup.append("text")
             .attr("x", legend.x + legend.boxWidth + legend.textMargin)
             .attr("y", legendY + legend.boxHeight)
-            .text("val" + i);
+            .text(keys[i]);
     }
-}
-
-function recvFileName(fname) {
-    console.log("filename received: " + fname);
-    $("#heading").text(fname);
 }
 
 function redraw(plot) {
@@ -309,6 +307,12 @@ function recvData(data) {
         valuesStr = line[1].split(','),
         numValues = valuesStr.length;
 
+    if (eventName === "MARK") {
+        // FIXME: handle MARK events;
+        console.log("FIXME: handle mark event " + valuesStr);
+        return;
+    }
+
     var plot;
     var numPlots = plots.length;
     for (i = 0; i < numPlots; i++) {
@@ -317,7 +321,17 @@ function recvData(data) {
         }
     }
     if (plot === undefined) {
-        plot = new Plot(eventName, numValues);
+        console.log("Unknown event received: " + eventName);
+        // construct dummy key values
+        var keysCSV = "";
+        for (i = 0; i < numValues; i++) {
+            keysCSV = "val" + i;
+            if (i !== numValues - 1) {
+                keysCSV += ",";
+            }
+        }
+        console.log(keysCSV);
+        plot = new Plot(eventName, keysCSV);
         plots.push(plot);
     }
 
@@ -336,9 +350,21 @@ function recvData(data) {
     redraw(plot);
 }
 
+function recvPlotInfo(pinfo) {
+    console.log("GOT PLOT INFO: " + pinfo.eventName);
+    var plot = new Plot(pinfo.eventName, pinfo.keysCSV);
+    plots.push(plot);
+}
+
+function recvFileName(fname) {
+    console.log("filename received: " + fname);
+    $("#heading").text(fname);
+}
+
 window.onload = function() {
     var socket = io.connect('http://localhost:8080');
     socket.on('data:filename', recvFileName);
+    socket.on('data:plotinfo', recvPlotInfo);
     socket.on('data', recvData);
     socket.emit('client:ready');
 };
